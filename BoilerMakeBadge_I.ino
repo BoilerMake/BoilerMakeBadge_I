@@ -79,6 +79,7 @@ void setup() {
   radio.setRetries(200, 5); // set the delay and number of retries upon failed transmit
   radio.openReadingPipe(0, this_node_address); // Open this address
   radio.startListening(); // Start listening on opened address
+  radio.enableDynamicAck();
 
   // Shift register pin initializations
   pinMode(SROEPin, OUTPUT);
@@ -267,9 +268,27 @@ void handleSerialData(char inData[], byte index) {
     
   } else if (strcmp(words[0], "search") == 0) {
     
-    if (strcmp(words[1], "-c") == 0) { // 
+    if (strcmp(words[1], "-a") == 0) { // 
       
+      radio.setAutoAck(1);                    // Ensure autoACK is enabled
+      //radio.setRetries(15,15);
       
+      const int hexStart = 0x0000;
+      const int hexEnd = 0x01FF;
+      const int addrRange = hexEnd - hexStart;
+      struct payload myPayload = {LED, '1', {'\0'}};
+      
+      for (int TOaddr = 0; TOaddr < addrRange; TOaddr++) {
+        radio.stopListening();
+        radio.openWritingPipe(TOaddr);
+        radio.write(&myPayload, sizeof(myPayload));
+        int* crapbuffer = new int(0);
+        radio.read(crapbuffer, 10);
+        if (radio.isAckPayloadAvailable()){
+          Serial.println(TOaddr, HEX);
+        }
+        radio.startListening();
+      }      
       
     }
     
