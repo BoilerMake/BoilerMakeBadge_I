@@ -220,6 +220,15 @@ void handleSerialData(char inData[], byte index) {
         radio.write(&myPayload, sizeof(myPayload));
         radio.startListening();
       }
+      
+      else if (strcmp(words[2], "-d") == 0) { // Send LED pattern
+        struct payload myPayload = {DEMO, ' ', {}};
+        
+        radio.stopListening();
+        radio.openWritingPipe(TOaddr);
+        radio.write(&myPayload, sizeof(myPayload));
+        radio.startListening();
+      }
 
       else {
         Serial.println("  Invalid command field.");
@@ -245,6 +254,13 @@ void handleSerialData(char inData[], byte index) {
         Serial.println("  Invalid self LED pattern field.");
       }
     }
+    
+    else if (strcmp(words[1], "-d") == 0) { // Send LED pattern
+        struct payload selfPayload = {DEMO, ' ', {}};
+        
+        handlePayload(&selfPayload);
+    }
+    
     else {
       Serial.println("  Invalid self field.");
     }
