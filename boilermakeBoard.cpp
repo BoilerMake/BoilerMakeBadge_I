@@ -17,7 +17,7 @@
 #define MAX_TERMINAL_LINE_LEN 40
 #define MAX_TERMINAL_WORDS     7
 
-// 14 is strlen("send FFFF -m ")
+// 14 is strlen("send FFFF -m X")
 // the max message length able to be sent from the terminal is
 // total terminal line length MINUS the rest of the message
 #define MAX_TERMINAL_MESSAGE_LEN  MAX_TERMINAL_LINE_LEN - 14
@@ -148,7 +148,7 @@ void serialRead() {
 }
 
 
-// Handle received commands from user obtained via the serial termina
+// Handle received commands from user obtained via the serial terminal
 void handleSerialData(char inData[], byte index) {
   // tokenize the input from the terminal by spaces
   char * words[MAX_TERMINAL_WORDS];
@@ -426,12 +426,12 @@ void printHelpText() {
   Serial.println("      [command] - command field.");
   Serial.println("        -p - ping destination node.");
   Serial.println("        -l - send LED pattern to destination node.");
-  Serial.println("           - [data] - LED pattern. Valid range: 0-255.");
+  Serial.println("           - [data] - LED pattern. Valid range: 0-4.");
   Serial.println("        -m - send message to destination node.");
   Serial.println("           - [data] - message to be sent. Max 26 characters.");
   Serial.println();
   Serial.println("  channel [val] - change channel of your node.");
-  Serial.println("                - [val] - new channel. Valid range: 0-83.");
+  Serial.println("                - [val] - new channel. Valid range: 0-83. Default: 80.");
   Serial.println();
   Serial.println("  radio [on | off] - turn radio on or off");
 }
