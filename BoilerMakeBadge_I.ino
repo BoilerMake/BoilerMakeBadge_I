@@ -229,7 +229,26 @@ void handleSerialData(char inData[], byte index) {
     else {
       Serial.println("  Invalid address field.");
     }
+    
+  } else if (strcmp(words[0], "self") == 0) {
+    
+    if (strcmp(words[1], "-l") == 0) { // Send LED pattern
+      if (strspn(words[2], "1234567890") == 1) {
+        byte led_patt = (byte) atoi(words[2]);
+        struct payload selfPayload = {LED, led_patt, {'\0'}};
+        size_t len = sizeof(LED) + sizeof(led_patt) + sizeof('\0');
 
+        handlePayload(&selfPayload);
+      }
+
+      else {
+        Serial.println("  Invalid self LED pattern field.");
+      }
+    }
+    else {
+      Serial.println("  Invalid self field.");
+    }
+      
   } else if (strcmp(words[0], "channel") == 0) {
 
     // Set radio channel
@@ -429,6 +448,9 @@ void printHelpText() {
   Serial.println("           - [data] - LED pattern. Valid range: 0-4.");
   Serial.println("        -m - send message to destination node.");
   Serial.println("           - [data] - message to be sent. Max 26 characters.");
+  Serial.println();
+  Serial.println("  self [command] [data] - simulate receiving a packet of data.");
+  Serial.println("        -l - send LED pattern to yourself.");
   Serial.println();
   Serial.println("  channel [val] - change channel of your node.");
   Serial.println("                - [val] - new channel. Valid range: 0-83. Default: 80.");
