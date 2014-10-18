@@ -9,6 +9,9 @@
 // Viraj Sinha       (virajosinha@gmail.com)
 // Scott Opell       (me@scottopell.com)
 //
+// Improvements by Hunter Thornsberry (hunter@hunterthornsberry.com)
+// Uses code from http://stefanjones.ca/blog/arduino-leonardo-remote-multimedia-keys/
+//
 // 10/15/2014
 //
 // Happy Hacking!
@@ -32,8 +35,6 @@ void printPrompt(void);
 
 void networkRead(void);
 void serialRead(void);
-void handleSerialData(char[], byte);
-
 void setValue(word);
 void handlePayload(struct payload *);
 
@@ -50,6 +51,7 @@ const byte DEMO   = 3; // Demo Pattern
 int SROEPin = 3; // using digital pin 3 for SR !OE
 int SRLatchPin = 8; // using digital pin 4 for SR latch
 boolean terminalConnect = false; // indicates if the terminal has connected to the board yet
+char * name;
 
 // nRF24L01 radio static initializations
 RF24 radio(9,10); // Setup nRF24L01 on SPI bus using pins 9 & 10 as CE & CSN, respectively
@@ -60,6 +62,7 @@ struct payload{ // Payload structure
   byte command;
   byte led_pattern;
   char message[30];
+  char hex_addr[10];
 };
 
 // This runs once on boot
@@ -148,7 +151,7 @@ void serialRead() {
 }
 
 
-// Handle received commands from user obtained via the serial termina
+// Handle received commands from user obtained via the serial terminal
 void handleSerialData(char inData[], byte index) {
   // tokenize the input from the terminal by spaces
   char * words[MAX_TERMINAL_WORDS];
@@ -158,11 +161,17 @@ void handleSerialData(char inData[], byte index) {
     words[current_word_index++] = p;
     p = strtok(NULL, " ");
   }
-
+  if (strcmp(words[0], "-n") == 0) {
+    name = words[1];
+    Serial.print("Your name is ");
+    Serial.println(name);
+  }
   if (strcmp(words[0], "help") == 0) {
     printHelpText();
 
   } else if (strcmp(words[0], "send") == 0) {
+      char hex_addr[10];
+      sprintf(hex_addr, "%04x", this_node_address);
     // checks if address field was given valid characters
     if ((strspn(words[1], "1234567890AaBbCcDdEeFf") <= 4)
         && (strspn(words[1], "1234567890AaBbCcDdEeFf") > 0)) {
@@ -209,7 +218,6 @@ void handleSerialData(char inData[], byte index) {
             curr_pos++;
           }
         }
-
         struct payload myPayload = {MESS, '\0', {}};
 
         // the end of the string minus the start of the string gives the length
@@ -260,8 +268,14 @@ void handleSerialData(char inData[], byte index) {
 
 // Grab message received by nRF for this node
 void handlePayload(struct payload * myPayload) {
+  char * words[MAX_TERMINAL_WORDS];
+  byte current_word_index = 0;
+  char * p = strtok(myPayload->message, " ");
+  while(p != NULL) {
+    words[current_word_index++] = p;
+    p = strtok(NULL, " ");
+  }
   switch(myPayload->command) {
-
     case PING:
       Serial.println("Someone pinged us!");
       printPrompt();
@@ -272,9 +286,24 @@ void handlePayload(struct payload * myPayload) {
       break;
 
     case MESS:
-      Serial.print("Message:\r\n  ");
+      ledDisplay(1);
+      Serial.print("Message:");
       Serial.println(myPayload->message);
-      printPrompt();
+      Serial.println(words[0]);
+      if (strcmp(words[0], "Play") == 0)
+      {
+        setValue(0x1010);
+        delay(3);
+        Serial.println("sent");
+        Remote.play();
+      }
+      if (strcmp(words[0], "Stop") == 0)
+      {
+        setValue(0x1010);
+        delay(3);
+        Serial.println("sent");
+        Remote.pause();
+      }
       break;
 
     case DEMO:
@@ -321,17 +350,25 @@ void ledDisplay(byte pattern) {
   if(pattern == 0) {
     word pattern = 0x0000; // variable used in shifting process
     int del = 62; // ms value for delay between LED toggles
-
-    for(int i=0; i<16; i++) {
-      pattern = (pattern << 1) | 0x0001;
-      setValue(pattern);
-      delay(del);
+    while (true)
+    {
+      for(int i=0; i<16; i++) {
+        pattern = (pattern << 2) | 0x0001;
+        setValue(pattern);
+        if (i < 8)
+        {
+          delay(del);
+        }
     }
 
-    for(int i=0; i<16; i++) {
-      pattern = (pattern << 1);
-      setValue(pattern);
-      delay(del);
+      for(int i=0; i<16; i++) {
+        pattern = (pattern << 2);
+        setValue(pattern);
+        if (i < 8)
+        {
+          delay(del);
+        }
+    }
     }
   }
   else if(pattern == 1) {
@@ -371,6 +408,10 @@ void ledDisplay(byte pattern) {
     delay(del);
     setValue(0x0000);
     delay(del);
+  }
+    else if(pattern == 5) {
+    int del = 10;
+    setValue(0x1010);
   }
   else if(pattern == 3) {
     word pattern = 0x0101;
