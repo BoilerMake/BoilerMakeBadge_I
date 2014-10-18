@@ -8,7 +8,9 @@
 // Lior Ben-Yehoshua (admin@Lior9999.com)
 // Viraj Sinha       (virajosinha@gmail.com)
 // Scott Opell       (me@scottopell.com)
+//
 // Improvements by Hunter Thornsberry (hunter@hunterthornsberry.com)
+// Uses code from http://stefanjones.ca/blog/arduino-leonardo-remote-multimedia-keys/
 //
 // 10/15/2014
 //
