@@ -76,10 +76,10 @@ void setup() {
   radio.setDataRate(RF24_1MBPS); // 1Mbps transfer rate
   radio.setCRCLength(RF24_CRC_16); // 16-bit CRC
   radio.setChannel(80); // Channel center frequency = 2.4005 GHz + (Channel# * 1 MHz)
+  radio.enableDynamicAck();
   radio.setRetries(200, 5); // set the delay and number of retries upon failed transmit
   radio.openReadingPipe(0, this_node_address); // Open this address
   radio.startListening(); // Start listening on opened address
-  radio.enableDynamicAck();
 
   // Shift register pin initializations
   pinMode(SROEPin, OUTPUT);
@@ -266,29 +266,40 @@ void handleSerialData(char inData[], byte index) {
       Serial.println("  Invalid self field.");
     }
     
-  } else if (strcmp(words[0], "search") == 0) {
+  } else if (strcmp(words[0], "scan") == 0) {
     
     if (strcmp(words[1], "-a") == 0) { // 
       
-      radio.setAutoAck(1);                    // Ensure autoACK is enabled
-      //radio.setRetries(15,15);
-      
+      //radio.setAutoAck(1);
+     
       const int hexStart = 0x0000;
-      const int hexEnd = 0x01FF;
-      const int addrRange = hexEnd - hexStart;
-      struct payload myPayload = {LED, '1', {'\0'}};
+      const int hexEnd = 0x0FFF;
+      const uint16_t addrRange = hexEnd - hexStart;
+      struct payload myPayload = {LED, (byte)4, {'\0'}};
       
-      for (int TOaddr = 0; TOaddr < addrRange; TOaddr++) {
+      int* crapbuffer = new int(0);
+      
+      for (uint16_t TOaddr = 0; TOaddr < addrRange; TOaddr++) {
         radio.stopListening();
         radio.openWritingPipe(TOaddr);
-        radio.write(&myPayload, sizeof(myPayload));
-        int* crapbuffer = new int(0);
-        radio.read(crapbuffer, 10);
-        if (radio.isAckPayloadAvailable()){
+        //radio.enableDynamicAck();
+        bool success = radio.write(&myPayload, sizeof(myPayload), 0);
+        if (success){
           Serial.println(TOaddr, HEX);
         }
+        
+              
+        
+        //radio.read(crapbuffer, 16);
+        //Serial.print(*crapbuffer);
+        //if (radio.available()){
+        //  Serial.print("found");
+        //}
+        
         radio.startListening();
-      }      
+      }
+      
+      Serial.println("Done searching");
       
     }
     
@@ -500,6 +511,7 @@ void printHelpText() {
   Serial.println("        -l - send LED pattern to yourself.");
   Serial.println();
   Serial.println("  search [command] - search for peers...  ");
+  Serial.println("        -a - increment from 0x000 to 0xFFF and see whose alive");
   Serial.println();
   Serial.println("  channel [val] - change channel of your node.");
   Serial.println("                - [val] - new channel. Valid range: 0-83. Default: 80.");
