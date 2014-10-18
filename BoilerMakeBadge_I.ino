@@ -510,7 +510,7 @@ void printHelpText() {
   Serial.println("  self [command] [data] - simulate receiving a packet of data.");
   Serial.println("        -l - send LED pattern to yourself.");
   Serial.println();
-  Serial.println("  search [command] - search for peers...  ");
+  Serial.println("  scan [command] - search for peers...  ");
   Serial.println("        -a - increment from 0x000 to 0xFFF and see whose alive");
   Serial.println();
   Serial.println("  channel [val] - change channel of your node.");
