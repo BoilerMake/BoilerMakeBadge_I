@@ -22,7 +22,7 @@ Each BoilerMake badge is equipped with a small nRF24L01 radio which allows it to
 
 1. After installing the Arduino IDE, plug in the board to your computer via micro USB cable.
 2. All lights around the board should light up. If this not's the case, unplug and plug the board back in again.
-3. Download this GitHub repo [here](https://github.com/maniacbug/RF24) as a .zip file and rename RF.zip
+3. Download this GitHub repo [here](https://github.com/maniacbug/RF24) as a .zip file.
 4. Open the Arduino IDE and go to sketch -> import library -> add library -> find the rf24-master.zip and select it.
 5. Copy and Paste the code found [here](https://raw.githubusercontent.com/obnauticus/BoilerMakeBadge_I/master/boilermakeBoard.cpp) into your new Arduino sketch.
 6. Go to Tools -> Board and select Arduino Leonardo.
