@@ -250,7 +250,7 @@ void handleSerialData(char inData[], byte index) {
   } else if (strcmp(words[0], "self") == 0) {
     
     if (strcmp(words[1], "-l") == 0) { // Send LED pattern
-      if (strspn(words[2], "1234567890") == 1) {
+      if ((strspn(words[2], "1234567890") > 0) && strspn(words[3], "1234567890") < 4) {
         byte led_patt = (byte) atoi(words[2]);
         struct payload selfPayload = {LED, led_patt, {'\0'}};
         size_t len = sizeof(LED) + sizeof(led_patt) + sizeof('\0');
@@ -564,12 +564,17 @@ void scanA() {
         bool success = radio.write(&myPayload, sizeof(myPayload), 0);
         if (success){
           // Add found address.
+          Serial.println(TOaddr);
           testArray[numAddrFound] = TOaddr;
           numAddrFound++;
           
           //Blink for success.
-          struct payload selfPayload = {LED, 4, {'\0'}};
-          handlePayload(&selfPayload);
+          digitalWrite(SROEPin, LOW);         
+          setValue(0xFFFF);
+          delay(125);
+          setValue(0x0000);
+          delay(125);
+          digitalWrite(SROEPin, HIGH);
         }
         
               
