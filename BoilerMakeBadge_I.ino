@@ -641,7 +641,7 @@ void ledGraph(int count, int ofTotal) {
 void timedPing(long int id) {
   long int time1, time2;
         
-  struct payload myPayload = {LED, (byte)4, {'\0'}};
+  struct payload myPayload = {MESS, (byte)0, {'\0'}};
         
   radio.stopListening();
   radio.openWritingPipe(id);
@@ -653,7 +653,7 @@ void timedPing(long int id) {
     Serial.print(success);
     Serial.print('\t');
     Serial.println(micros()-time1);
-    delay(1000);
+    delay(250);
   }
   
   radio.startListening();
