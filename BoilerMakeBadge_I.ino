@@ -540,8 +540,10 @@ void welcomeMessage(void) {
   Serial.print("\nAll commands must be terminated with a carriage return.\r\n"
       "Type 'help' for a list of available commands.\r\n\n> ");
       
-  Serial.println("Scan results:");
-  printScanResults();
+  if(numAddrFound != 0) { 
+    Serial.println("Scan results:");
+    printScanResults();
+  }
 }
 
 void scanA() {
@@ -564,7 +566,7 @@ void scanA() {
         bool success = radio.write(&myPayload, sizeof(myPayload), 0);
         if (success){
           // Add found address.
-          Serial.println(TOaddr);
+          Serial.println(TOaddr, HEX);
           testArray[numAddrFound] = TOaddr;
           numAddrFound++;
           
