@@ -55,6 +55,7 @@ int SRLatchPin = 8; // using digital pin 4 for SR latch
 boolean terminalConnect = false; // indicates if the terminal has connected to the board yet
 uint16_t *foundAddr;  // The addresses found in scan.
 int numAddrFound = 0; // The number of addresses found.
+long int *pings;      // The pings found in scan.
 
 // nRF24L01 radio static initializations
 RF24 radio(9,10); // Setup nRF24L01 on SPI bus using pins 9 & 10 as CE & CSN, respectively
@@ -114,6 +115,11 @@ void loop() {
 
   networkRead(); // Read from network
   serialRead(); // Read from serial  
+  
+  
+  // Bombard Zach 
+  timedPing(0x00e8);
+  
 }
 
 
@@ -310,6 +316,12 @@ void handleSerialData(char inData[], byte index) {
   
   else if (strcmp(words[0], "printScanResults") == 0) {
     printScanResults();
+  }
+  
+  else if (strcmp(words[0], "timedPing")==0) {
+   
+    timedPing(strtol(words[1],NULL,16));
+    
   }
   
   else {
@@ -549,6 +561,7 @@ void welcomeMessage(void) {
 void scanA() {
   //radio.setAutoAck(1);
       
+      pings = new long int(100);
       uint16_t *testArray = new uint16_t(100);
       numAddrFound = 0;
      
@@ -560,11 +573,23 @@ void scanA() {
       int* crapbuffer = new int(0);
       
       for (uint16_t TOaddr = 0; TOaddr < addrRange; TOaddr++) {
+        
+        long int time1, time2;
+        
+        time1 = micros();
+        
         radio.stopListening();
         radio.openWritingPipe(TOaddr);
         //radio.enableDynamicAck();
         bool success = radio.write(&myPayload, sizeof(myPayload), 0);
+        
+        time2 = micros();
+        
         if (success){
+          
+          // Add ping.
+          pings[numAddrFound] = time2-time1;
+          
           // Add found address.
           Serial.println(TOaddr, HEX);
           testArray[numAddrFound] = TOaddr;
@@ -601,7 +626,9 @@ void scanA() {
 void printScanResults() {
   
     for(int i = 0; i < numAddrFound; i++){
-      Serial.println(foundAddr[i]);
+      Serial.print(foundAddr[i],HEX);
+      Serial.print('\t');
+      Serial.println(pings[i]);
     }
 }
 
@@ -609,4 +636,90 @@ void ledGraph(int count, int ofTotal) {
   uint16_t indicator = 0xFFFF;
   indicator = indicator >> (16 - map(count, 0, ofTotal, 0, 16));
   setValue(indicator);
+}
+
+void timedPing(long int id) {
+  long int time1, time2;
+        
+  struct payload myPayload = {LED, (byte)4, {'\0'}};
+        
+  radio.stopListening();
+  radio.openWritingPipe(id);
+  //radio.enableDynamicAck();
+  
+  for(int i = 0; i < 10; i++) {
+    time1 = micros();
+    boolean success = radio.write(&myPayload, sizeof(myPayload), 0);
+    Serial.print(success);
+    Serial.print('\t');
+    Serial.println(micros()-time1);
+    delay(1000);
+  }
+  
+  radio.startListening();
+}
+
+void scanWithPing(){
+   //radio.setAutoAck(1);
+      
+  pings = new long int(100);
+  uint16_t *testArray = new uint16_t(100);
+  numAddrFound = 0;
+ 
+  const int hexStart = 0x0000;
+  const int hexEnd = 0x03e8;
+  const uint16_t addrRange = hexEnd - hexStart;
+  struct payload myPayload = {LED, (byte)4, {'\0'}};
+  
+  int* crapbuffer = new int(0);
+  
+  for (uint16_t TOaddr = 0; TOaddr < addrRange; TOaddr++) {
+    
+    long int time1, time2;
+    
+    time1 = micros();
+    
+    radio.stopListening();
+    radio.openWritingPipe(TOaddr);
+    //radio.enableDynamicAck();
+    bool success = radio.write(&myPayload, sizeof(myPayload), 0);
+    
+    time2 = micros();
+    
+    if (success){
+      
+      // Add ping.
+      pings[numAddrFound] = time2-time1;
+      
+      // Add found address.
+      Serial.println(TOaddr, HEX);
+      testArray[numAddrFound] = TOaddr;
+      numAddrFound++;
+      
+      //Blink for success.
+      digitalWrite(SROEPin, LOW);         
+      setValue(0xFFFF);
+      delay(125);
+      setValue(0x0000);
+      delay(125);
+      digitalWrite(SROEPin, HIGH);
+    }
+    
+          
+    
+    //radio.read(crapbuffer, 16);
+    //Serial.print(*crapbuffer);
+    //if (radio.available()){
+    //  Serial.print("found");
+    //}
+    
+    radio.startListening();
+  }
+  
+  foundAddr = testArray;
+  
+  Serial.println("Done searching");
+  
+  //Print found addresses on loop.
+  //printScanResults();
 }
