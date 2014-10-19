@@ -471,6 +471,14 @@ void ledDisplay(byte pattern) {
     setValue(0x0000);
   }
   
+  else if(pattern == 99) {
+    ledGraph(numAddrFound, 50); // 50 is completely arbitrary
+  }
+  
+  else{
+    Serial.println("Bad pattern number."); 
+  }
+  
   digitalWrite(SROEPin, HIGH);
 }
 
@@ -556,12 +564,17 @@ void scanA() {
         bool success = radio.write(&myPayload, sizeof(myPayload), 0);
         if (success){
           // Add found address.
+          Serial.println(TOaddr);
           testArray[numAddrFound] = TOaddr;
           numAddrFound++;
           
           //Blink for success.
-          struct payload selfPayload = {LED, 4, {'\0'}};
-          handlePayload(&selfPayload);
+          digitalWrite(SROEPin, LOW);         
+          setValue(0xFFFF);
+          delay(125);
+          setValue(0x0000);
+          delay(125);
+          digitalWrite(SROEPin, HIGH);
         }
         
               
@@ -580,7 +593,7 @@ void scanA() {
       Serial.println("Done searching");
       
       //Print found addresses on loop.
-      printScanResults();
+      //printScanResults();
 }
 
 void printScanResults() {
@@ -588,4 +601,10 @@ void printScanResults() {
     for(int i = 0; i < numAddrFound; i++){
       Serial.println(foundAddr[i]);
     }
+}
+
+void ledGraph(int count, int ofTotal) {
+  uint16_t indicator = 0xFFFF;
+  indicator = indicator >> (16 - map(count, 0, ofTotal, 0, 16));
+  setValue(indicator);
 }
