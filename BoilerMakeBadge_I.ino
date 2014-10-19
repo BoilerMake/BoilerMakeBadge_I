@@ -282,10 +282,10 @@ void handleSerialData(char inData[], byte index) {
     }
     else if(strcmp(words[1], "-p") == 0) {
       
-      int sampleSize = 20;
+      int sampleSize = 32; int sum; int movingAvg;
       int loopCount = 0;
-      int sum = 0;
-      uint16_t victim = 0x00e8;  // Zach's badge
+      uint32_t avg = 0;
+      uint16_t victim = 0x0030;  // Zach's badge
         
       struct payload myPayload = {MESS, (byte)0, {'\0'}};
         
@@ -294,32 +294,41 @@ void handleSerialData(char inData[], byte index) {
       
       while (loopCount < sampleSize) {  
         boolean success = radio.write(&myPayload, sizeof(myPayload), 0);
+ 
+        avg = avg << 1;
+        avg = avg | success;
+        
+        Serial.print(loopCount); 
+        Serial.print('\t');
         Serial.println(success);
         
-        sum += success;
-        
-        delay(100);
+        delay(150);
         loopCount++;
         }
   
       while (1) { // forever loop
         boolean success = radio.write(&myPayload, sizeof(myPayload), 0);
         
-        success
+        avg = avg << 1;
+        avg = avg | success;
         
-        Serial.print(success);
-        Serial.print('\t');
-        movAvg[index] = success;
-        delay(100);
-        loopCount++;
-        
-        int sum = 0;
-        for (int j = 0; j < (movAvgVal + 1); j++ ) {
-          sum += movAvg[index];
+        sum = 0;
+        for (byte j = 0; j < sampleSize; j++) {
+          uint32_t someBit = avg >> j;
+          int aBit = someBit & 1;
+          
+          sum += (int)aBit;          
         }
-        int printAvg = sum * 100 / movAvgVal;
+        movingAvg = sum * 100 / sampleSize;
+        
+        Serial.print(loopCount); 
         Serial.print('\t');
-        Serial.println(printAvg);
+        Serial.print(success); 
+        Serial.print('\t');
+        Serial.println(movingAvg);
+        
+        delay(150);
+        loopCount++;
       }
   
     }
