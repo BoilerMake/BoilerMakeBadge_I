@@ -282,7 +282,11 @@ void handleSerialData(char inData[], byte index) {
     
   } else if (strcmp(words[0], "scan") == 0) {
     
-    if (strcmp(words[1], "-a") == 0) { // 
+    if (strcmp(words[1], "-l") == 0) {
+      while(1) scanA();
+    }
+    
+    else if (strcmp(words[1], "-a") == 0) { // 
       scanA();
     }
     else if(strcmp(words[1], "-p") == 0) {
@@ -372,6 +376,10 @@ void handleSerialData(char inData[], byte index) {
    
     timedPing(strtol(words[1],NULL,16));
     
+  }
+  
+  else if (strcmp(words[0], "longAverage")==0) {
+    longAverage();
   }
   
   else {
@@ -656,12 +664,7 @@ void scanA() {
         }
         
               
-        
-        //radio.read(crapbuffer, 16);
-        //Serial.print(*crapbuffer);
-        //if (radio.available()){
-        //  Serial.print("found");
-        //}
+       
         
         radio.startListening();
       }
@@ -778,16 +781,14 @@ void scanWithPing(){
 // This is broken.
 void longAverage() {
  
+  int maxIndex = 300;
   
-  const int hexStart = 0x0000;
-  const int hexEnd = 0x03e8;
-  const uint16_t addrRange = hexEnd - hexStart;
   struct payload myPayload = {LED, (byte)4, {'\0'}};
   
   delay(5000);
   
-  int* sums = (int*) malloc(600*sizeof(int));
-  for(int j = 0; j < 600; j++){
+  int* sums = (int*) malloc(maxIndex*sizeof(int));
+  for(int j = 0; j < maxIndex; j++){
     sums[j] = 0;
   }
   
@@ -798,10 +799,10 @@ void longAverage() {
   while(++i){
     
     
-      for (uint16_t TOaddr = 0; TOaddr < addrRange; TOaddr++) {
+      for (int TOaddr = 0; TOaddr < maxIndex; TOaddr++) {
         
         
-        radio.openWritingPipe(TOaddr);
+        radio.openWritingPipe((uint16_t)TOaddr);
         //radio.enableDynamicAck();
         bool success = radio.write(&myPayload, sizeof(myPayload), 0);
         
