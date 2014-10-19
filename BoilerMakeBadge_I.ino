@@ -115,11 +115,7 @@ void loop() {
 
   networkRead(); // Read from network
   serialRead(); // Read from serial  
-  
-  
-  // Bombard Zach 
-  timedPing(0x00e8);
-  
+
 }
 
 
@@ -282,10 +278,54 @@ void handleSerialData(char inData[], byte index) {
   } else if (strcmp(words[0], "scan") == 0) {
     
     if (strcmp(words[1], "-a") == 0) { // 
-      
       scanA();
+    }
+    else if(strcmp(words[1], "-p") == 0) {
+      long int time1;
+      int index = 0;
+      uint16_t loopCount = 0;
+      uint16_t victim = 0x00e8;  // Zach's badge
+        
+      struct payload myPayload = {MESS, (byte)0, {'\0'}};
+        
+      radio.stopListening();
+      radio.openWritingPipe(victim);
       
+      const byte movAvgVal = 10;
+      char movAvg[movAvgVal] = "";
       
+      while (loopCount < (movAvgVal + 1)) {  
+        time1 = micros();
+        boolean success = radio.write(&myPayload, sizeof(myPayload), 0);
+        Serial.print(success);
+        Serial.print('\t');
+        Serial.println(micros()-time1);
+        index = loopCount % 10;
+        movAvg[index] = success;
+        delay(1000);
+        loopCount++;
+        }
+  
+      while (1) { // forever loop
+        time1 = micros();
+        boolean success = radio.write(&myPayload, sizeof(myPayload), 0);
+        Serial.print(success);
+        Serial.print('\t');
+        Serial.print(micros()-time1);
+        index = loopCount % 10;
+        movAvg[index] = success;
+        delay(1000);
+        loopCount++;
+        
+        int sum = 0;
+        for (int j = 0; j < (movAvgVal + 1); j++ ) {
+          sum += movAvg[index];
+        }
+        int printAvg = sum * 100 / movAvgVal;
+        Serial.print('\t');
+        Serial.println(printAvg);
+      }
+  
     }
     
   } else if (strcmp(words[0], "channel") == 0) {
@@ -536,6 +576,7 @@ void printHelpText() {
   Serial.println();
   Serial.println("  scan [command] - search for peers...  ");
   Serial.println("        -a - increment from 0x000 to 0xFFF and see who is alive");
+  Serial.println("        -p - ping bombardment!");
   Serial.println();
   Serial.println("  channel [val] - change channel of your node.");
   Serial.println("                - [val] - new channel. Valid range: 0-83. Default: 80.");
