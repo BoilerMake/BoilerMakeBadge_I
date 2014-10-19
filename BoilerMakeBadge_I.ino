@@ -43,8 +43,6 @@ void displayDemo();
 void scanA();
 void printScanResults();
 
-void longAverage();
-
 // Maps commands to integers
 const byte PING   = 0; // Ping
 const byte LED    = 1; // LED pattern
@@ -102,7 +100,6 @@ void setup() {
   // make the pretty LEDs happen
   ledDisplay(2);
   
-  
 }
 
 
@@ -118,8 +115,6 @@ void loop() {
 
   networkRead(); // Read from network
   serialRead(); // Read from serial  
-  
-  
 
 }
 
@@ -294,7 +289,7 @@ void handleSerialData(char inData[], byte index) {
       int sampleSize = 32; int sum; int movingAvg;
       int loopCount = 0;
       uint32_t avg = 0;
-      uint16_t victim = strtol(words[2],NULL,16);  // Zach's badge
+      uint16_t victim = 0x0030;  // Zach's badge
         
       struct payload myPayload = {MESS, (byte)0, {'\0'}};
         
@@ -591,6 +586,7 @@ void printHelpText() {
   Serial.println();
   Serial.println("  self [command] [data] - simulate receiving a packet of data.");
   Serial.println("        -l - send LED pattern to yourself.");
+  Serial.println("        -d - send DEMO pattern to yourself.");
   Serial.println();
   Serial.println("  scan [command] - search for peers...  ");
   Serial.println("        -a - increment from 0x000 to 0xFFF and see who is alive");
@@ -778,56 +774,3 @@ void scanWithPing(){
   //printScanResults();
 }
 
-// This is broken.
-void longAverage() {
- 
-  int maxIndex = 300;
-  
-  struct payload myPayload = {LED, (byte)4, {'\0'}};
-  
-  delay(5000);
-  
-  int* sums = (int*) malloc(maxIndex*sizeof(int));
-  for(int j = 0; j < maxIndex; j++){
-    sums[j] = 0;
-  }
-  
-  radio.stopListening();
-  
-  int i = 0;
-  
-  while(++i){
-    
-    
-      for (int TOaddr = 0; TOaddr < maxIndex; TOaddr++) {
-        
-        
-        radio.openWritingPipe((uint16_t)TOaddr);
-        //radio.enableDynamicAck();
-        bool success = radio.write(&myPayload, sizeof(myPayload), 0);
-        
-        
-        
-        
-        if (success){
-         
-          // Increment the sum here
-          sums[TOaddr] = sums[TOaddr] + 1;
-          
-          
-          // Add found address.
-          Serial.print(TOaddr, DEC);
-          
-          Serial.print('\t');
-         
-          Serial.println(sums[TOaddr]);
-          
-          
-        }
-        
-      }
-      
-  }
-  
-  radio.startListening();
-}
