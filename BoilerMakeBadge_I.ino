@@ -471,6 +471,13 @@ void ledDisplay(byte pattern) {
     setValue(0x0000);
   }
   
+  else if(pattern == 99) {
+    ledGraph(numAddrFound, 50); // 50 is completely arbitrary
+  }
+  
+  else{
+    Serial.println("Bad pattern number."); 
+  }
   
   digitalWrite(SROEPin, HIGH);
 }
@@ -581,7 +588,7 @@ void scanA() {
       Serial.println("Done searching");
       
       //Print found addresses on loop.
-      printScanResults();
+      //printScanResults();
 }
 
 void printScanResults() {
