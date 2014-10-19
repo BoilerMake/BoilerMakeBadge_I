@@ -43,6 +43,8 @@ void displayDemo();
 void scanA();
 void printScanResults();
 
+void longAverage();
+
 // Maps commands to integers
 const byte PING   = 0; // Ping
 const byte LED    = 1; // LED pattern
@@ -100,6 +102,7 @@ void setup() {
   // make the pretty LEDs happen
   ledDisplay(2);
   
+  
 }
 
 
@@ -115,6 +118,8 @@ void loop() {
 
   networkRead(); // Read from network
   serialRead(); // Read from serial  
+  
+  
 
 }
 
@@ -285,7 +290,7 @@ void handleSerialData(char inData[], byte index) {
       int sampleSize = 32; int sum; int movingAvg;
       int loopCount = 0;
       uint32_t avg = 0;
-      uint16_t victim = 0x0030;  // Zach's badge
+      uint16_t victim = strtol(words[2],NULL,16);  // Zach's badge
         
       struct payload myPayload = {MESS, (byte)0, {'\0'}};
         
@@ -768,4 +773,60 @@ void scanWithPing(){
   
   //Print found addresses on loop.
   //printScanResults();
+}
+
+// This is broken.
+void longAverage() {
+ 
+  
+  const int hexStart = 0x0000;
+  const int hexEnd = 0x03e8;
+  const uint16_t addrRange = hexEnd - hexStart;
+  struct payload myPayload = {LED, (byte)4, {'\0'}};
+  
+  delay(5000);
+  
+  int* sums = (int*) malloc(600*sizeof(int));
+  for(int j = 0; j < 600; j++){
+    sums[j] = 0;
+  }
+  
+  radio.stopListening();
+  
+  int i = 0;
+  
+  while(++i){
+    
+    
+      for (uint16_t TOaddr = 0; TOaddr < addrRange; TOaddr++) {
+        
+        
+        radio.openWritingPipe(TOaddr);
+        //radio.enableDynamicAck();
+        bool success = radio.write(&myPayload, sizeof(myPayload), 0);
+        
+        
+        
+        
+        if (success){
+         
+          // Increment the sum here
+          sums[TOaddr] = sums[TOaddr] + 1;
+          
+          
+          // Add found address.
+          Serial.print(TOaddr, DEC);
+          
+          Serial.print('\t');
+         
+          Serial.println(sums[TOaddr]);
+          
+          
+        }
+        
+      }
+      
+  }
+  
+  radio.startListening();
 }
