@@ -40,6 +40,9 @@ void handlePayload(struct payload *);
 void ledDisplay(byte);
 void displayDemo();
 
+void scanA();
+void printScanResults();
+
 // Maps commands to integers
 const byte PING   = 0; // Ping
 const byte LED    = 1; // LED pattern
@@ -95,6 +98,10 @@ void setup() {
 
   // make the pretty LEDs happen
   ledDisplay(2);
+  
+  
+  // Scan em boyz
+  scanA();
 }
 
 
@@ -272,51 +279,8 @@ void handleSerialData(char inData[], byte index) {
   } else if (strcmp(words[0], "scan") == 0) {
     
     if (strcmp(words[1], "-a") == 0) { // 
-      //radio.setAutoAck(1);
       
-      uint16_t *testArray = new uint16_t(100);
-      numAddrFound = 0;
-     
-      const int hexStart = 0x0000;
-      const int hexEnd = 0x03e8;
-      const uint16_t addrRange = hexEnd - hexStart;
-      struct payload myPayload = {LED, (byte)4, {'\0'}};
-      
-      int* crapbuffer = new int(0);
-      
-      for (uint16_t TOaddr = 0; TOaddr < addrRange; TOaddr++) {
-        radio.stopListening();
-        radio.openWritingPipe(TOaddr);
-        //radio.enableDynamicAck();
-        bool success = radio.write(&myPayload, sizeof(myPayload), 0);
-        if (success){
-          // Add found address.
-          testArray[numAddrFound] = TOaddr;
-          numAddrFound++;
-        }
-        
-              
-        
-        //radio.read(crapbuffer, 16);
-        //Serial.print(*crapbuffer);
-        //if (radio.available()){
-        //  Serial.print("found");
-        //}
-        
-        radio.startListening();
-      }
-      
-      foundAddr = testArray;
-      
-      Serial.println("Done searching");
-      
-      //Print found addresses on loop.
-      while(1==1) {
-        delay(1000);
-        for (int i = 0; i < numAddrFound; i++) {
-          Serial.println(testArray[i], HEX);
-        }
-      }
+      scanA();
       
       
     }
@@ -348,9 +312,7 @@ void handleSerialData(char inData[], byte index) {
   }
   
   else if (strcmp(words[0], "printScanResults") == 0) {
-    for(int i = 0; i < numAddrFound; i++){
-      Serial.println(String(foundAddr[i]));
-    }
+    printScanResults();
   }
   
   else {
@@ -572,4 +534,61 @@ void welcomeMessage(void) {
   Serial.println(hex_addr);
   Serial.print("\nAll commands must be terminated with a carriage return.\r\n"
       "Type 'help' for a list of available commands.\r\n\n> ");
+      
+  Serial.println("Scan results:");
+  printScanResults();
+}
+
+void scanA() {
+  //radio.setAutoAck(1);
+      
+      uint16_t *testArray = new uint16_t(100);
+      numAddrFound = 0;
+     
+      const int hexStart = 0x0000;
+      const int hexEnd = 0x03e8;
+      const uint16_t addrRange = hexEnd - hexStart;
+      struct payload myPayload = {LED, (byte)4, {'\0'}};
+      
+      int* crapbuffer = new int(0);
+      
+      for (uint16_t TOaddr = 0; TOaddr < addrRange; TOaddr++) {
+        radio.stopListening();
+        radio.openWritingPipe(TOaddr);
+        //radio.enableDynamicAck();
+        bool success = radio.write(&myPayload, sizeof(myPayload), 0);
+        if (success){
+          // Add found address.
+          testArray[numAddrFound] = TOaddr;
+          numAddrFound++;
+          
+          //Blink for success.
+          struct payload selfPayload = {LED, 4, {'\0'}};
+          handlePayload(&selfPayload);
+        }
+        
+              
+        
+        //radio.read(crapbuffer, 16);
+        //Serial.print(*crapbuffer);
+        //if (radio.available()){
+        //  Serial.print("found");
+        //}
+        
+        radio.startListening();
+      }
+      
+      foundAddr = testArray;
+      
+      Serial.println("Done searching");
+      
+      //Print found addresses on loop.
+      printScanResults();
+}
+
+void printScanResults() {
+  
+    for(int i = 0; i < numAddrFound; i++){
+      Serial.println(foundAddr[i]);
+    }
 }
