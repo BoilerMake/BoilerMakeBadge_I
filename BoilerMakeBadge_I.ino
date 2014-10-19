@@ -281,9 +281,10 @@ void handleSerialData(char inData[], byte index) {
       scanA();
     }
     else if(strcmp(words[1], "-p") == 0) {
-      long int time1;
-      int index = 0;
-      uint16_t loopCount = 0;
+      
+      int sampleSize = 20;
+      int loopCount = 0;
+      int sum = 0;
       uint16_t victim = 0x00e8;  // Zach's badge
         
       struct payload myPayload = {MESS, (byte)0, {'\0'}};
@@ -291,30 +292,25 @@ void handleSerialData(char inData[], byte index) {
       radio.stopListening();
       radio.openWritingPipe(victim);
       
-      const byte movAvgVal = 10;
-      char movAvg[movAvgVal] = "";
-      
-      while (loopCount < (movAvgVal + 1)) {  
-        time1 = micros();
+      while (loopCount < sampleSize) {  
         boolean success = radio.write(&myPayload, sizeof(myPayload), 0);
-        Serial.print(success);
-        Serial.print('\t');
-        Serial.println(micros()-time1);
-        index = loopCount % 10;
-        movAvg[index] = success;
-        delay(1000);
+        Serial.println(success);
+        
+        sum += success;
+        
+        delay(100);
         loopCount++;
         }
   
       while (1) { // forever loop
-        time1 = micros();
         boolean success = radio.write(&myPayload, sizeof(myPayload), 0);
+        
+        success
+        
         Serial.print(success);
         Serial.print('\t');
-        Serial.print(micros()-time1);
-        index = loopCount % 10;
         movAvg[index] = success;
-        delay(1000);
+        delay(100);
         loopCount++;
         
         int sum = 0;
