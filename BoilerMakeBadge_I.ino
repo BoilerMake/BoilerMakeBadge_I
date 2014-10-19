@@ -99,9 +99,6 @@ void setup() {
   // make the pretty LEDs happen
   ledDisplay(2);
   
-  
-  // Scan em boyz
-  scanA();
 }
 
 
