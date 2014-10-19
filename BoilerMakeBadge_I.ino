@@ -373,10 +373,6 @@ void handleSerialData(char inData[], byte index) {
     
   }
   
-  else if (strcmp(words[0], "longAverage")==0) {
-    longAverage();
-  }
-  
   else {
     Serial.println("Unrecognized command.  Type help for help."); 
   }
