@@ -395,38 +395,38 @@ where AA in binary = 0b[8][7][6][5][4][3][2][1]
 void ledDisplay(byte pattern) {
   setValue(0x0000);
   digitalWrite(SROEPin, LOW);
-  if(pattern == 0) {
-    word pattern = 0x0000; // variable used in shifting process
+  if(pattern == 0) {  // Circle wipe clockwise
+    word lightShow = 0x0000; // variable used in shifting process
     int del = 62; // ms value for delay between LED toggles
 
     for(int i=0; i<16; i++) {
-      pattern = (pattern << 1) | 0x0001;
-      setValue(pattern);
+      lightShow = (lightShow << 1) | 0x0001;
+      setValue(lightShow);
       delay(del);
     }
 
     for(int i=0; i<16; i++) {
-      pattern = (pattern << 1);
-      setValue(pattern);
+      lightShow = (lightShow << 1);
+      setValue(lightShow);
       delay(del);
     }
   }
-  else if(pattern == 1) {
-    word pattern = 0x0000; // variable used in shifting process
+  else if(pattern == 1) { // Circle wipe couterclockwise
+    word lightShow = 0x0000; // variable used in shifting process
     int del = 62; // ms value for delay between LED toggles
 
     for (int i = 0; i < 16; i++) {
-      pattern = (pattern >> 1) | 0x8000;
-      setValue(pattern);
+      lightShow = (lightShow >> 1) | 0x8000;
+      setValue(lightShow);
       delay(del);
     }
     for (int i=0; i<16; i++) {
-      pattern = (pattern >> 1);
-      setValue(pattern);
+      lightShow = (lightShow >> 1);
+      setValue(lightShow);
       delay(del);
     }
   }
-  else if(pattern == 2) {
+  else if(pattern == 2) { // Cat eyes?
     int del = 100;
     setValue(0x1010);
     delay(del);
@@ -449,17 +449,17 @@ void ledDisplay(byte pattern) {
     setValue(0x0000);
     delay(del);
   }
-  else if(pattern == 3) {
-    word pattern = 0x0101;
+  else if(pattern == 3) { // Sumo circle
+    word lightShow = 0x0101;
     int del = 125;
-    setValue(pattern);
+    setValue(lightShow);
     for(int i=0; i<8; i++) {
       delay(del);
-      pattern = (pattern << 1);
-      setValue(pattern);
+      lightShow = (lightShow << 1);
+      setValue(lightShow);
     }
   }
-  else if(pattern == 4) {
+  else if(pattern == 4) { // All blink
     for (int i = 0; i < 4; i++) {
       setValue(0xFFFF);
       delay(125);
@@ -467,6 +467,27 @@ void ledDisplay(byte pattern) {
       delay(125);
     }
   }
+  else if(pattern == 5) { // Speeding single led
+    uint16_t lightShow = 0x0001;
+    int n = 2;
+    int n2 = (16 * n) + 1;
+    for (int i = 0; i < n2; i++) { // 17 positions, I'm aware
+      setValue(lightShow);
+      delay(map(i,0,n2,80,20));
+      lightShow = (lightShow << 1) | (lightShow >> (16 - 1));
+    }
+    setValue(0x0000);
+  }
+  else if(pattern == 6) { // shifting in pairs of two
+    uint16_t lightShow = 0xDDDD; // 1101110111011101
+    for (int i = 0; i < 33; i++) {
+      setValue(lightShow);
+      delay(250);
+      lightShow = (lightShow << 1) | (lightShow >> (16 - 1));
+    }
+    setValue(0x0000);
+  }
+  
   digitalWrite(SROEPin, HIGH);
 }
 
@@ -511,7 +532,7 @@ void printHelpText() {
   Serial.println("        -l - send LED pattern to yourself.");
   Serial.println();
   Serial.println("  scan [command] - search for peers...  ");
-  Serial.println("        -a - increment from 0x000 to 0xFFF and see whose alive");
+  Serial.println("        -a - increment from 0x000 to 0xFFF and see who is alive");
   Serial.println();
   Serial.println("  channel [val] - change channel of your node.");
   Serial.println("                - [val] - new channel. Valid range: 0-83. Default: 80.");
