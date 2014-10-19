@@ -471,6 +471,7 @@ void ledDisplay(byte pattern) {
     setValue(0x0000);
   }
   
+  
   digitalWrite(SROEPin, HIGH);
 }
 
@@ -588,4 +589,10 @@ void printScanResults() {
     for(int i = 0; i < numAddrFound; i++){
       Serial.println(foundAddr[i]);
     }
+}
+
+void ledGraph(int count, int ofTotal) {
+  uint16_t indicator = 0xFFFF;
+  indicator = indicator >> (16 - map(count, 0, ofTotal, 0, 16));
+  setValue(indicator);
 }
