@@ -50,6 +50,8 @@ const byte DEMO   = 3; // Demo Pattern
 int SROEPin = 3; // using digital pin 3 for SR !OE
 int SRLatchPin = 8; // using digital pin 4 for SR latch
 boolean terminalConnect = false; // indicates if the terminal has connected to the board yet
+uint16_t *foundAddr;  // The addresses found in scan.
+int numAddrFound = 0; // The number of addresses found.
 
 // nRF24L01 radio static initializations
 RF24 radio(9,10); // Setup nRF24L01 on SPI bus using pins 9 & 10 as CE & CSN, respectively
@@ -64,6 +66,7 @@ struct payload{ // Payload structure
 
 // This runs once on boot
 void setup() {
+  
   Serial.begin(9600);
 
   // SPI initializations
@@ -269,11 +272,13 @@ void handleSerialData(char inData[], byte index) {
   } else if (strcmp(words[0], "scan") == 0) {
     
     if (strcmp(words[1], "-a") == 0) { // 
-      
       //radio.setAutoAck(1);
+      
+      uint16_t *testArray = new uint16_t(100);
+      numAddrFound = 0;
      
       const int hexStart = 0x0000;
-      const int hexEnd = 0x0FFF;
+      const int hexEnd = 0x03e8;
       const uint16_t addrRange = hexEnd - hexStart;
       struct payload myPayload = {LED, (byte)4, {'\0'}};
       
@@ -285,7 +290,9 @@ void handleSerialData(char inData[], byte index) {
         //radio.enableDynamicAck();
         bool success = radio.write(&myPayload, sizeof(myPayload), 0);
         if (success){
-          Serial.println(TOaddr, HEX);
+          // Add found address.
+          testArray[numAddrFound] = TOaddr;
+          numAddrFound++;
         }
         
               
@@ -299,7 +306,18 @@ void handleSerialData(char inData[], byte index) {
         radio.startListening();
       }
       
+      foundAddr = testArray;
+      
       Serial.println("Done searching");
+      
+      //Print found addresses on loop.
+      while(1==1) {
+        delay(1000);
+        for (int i = 0; i < numAddrFound; i++) {
+          Serial.println(testArray[i], HEX);
+        }
+      }
+      
       
     }
     
@@ -326,6 +344,12 @@ void handleSerialData(char inData[], byte index) {
       radio.stopListening();
     } else {
       Serial.println(" Invalid syntax.");
+    }
+  }
+  
+  else if (strcmp(words[0], "printScanResults") == 0) {
+    for(int i = 0; i < numAddrFound; i++){
+      Serial.println(String(foundAddr[i]));
     }
   }
   
